@@ -1,9 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Button,
+  Dimensions,
   Animated,
   Pressable,
 } from "react-native";
@@ -13,10 +13,17 @@ import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
 let grabacion = new Audio.Recording();
 
 const GrabacionAudio = ({ navigation }) => {
-  const [RecordedURI, SetRecordedURI] = useState("");
-  const [isRecording, SetisRecording] = useState(false);
   const Reproductor = useRef(new Audio.Sound());
-  const [tiempo, setTiempo] = useState(10);
+
+  const [RecordedURI, setRecordedURI] = useState("");
+
+  const [isRecording, setIsRecording] = useState(false);
+
+  const [tiempo, setTiempo] = useState(5);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [finTiempo, setFinTiempo] = useState(false);
+  const [grabando, setGrabando] = useState();
+  const [isAnimated, setIsAnimated] = useState(false);
 
   async function iniciarGrabacion() {
     try {
@@ -33,7 +40,7 @@ const GrabacionAudio = ({ navigation }) => {
       );
       await grabacion.startAsync();
       console.log("grabacion iniciada");
-      SetisRecording(true);
+      setIsRecording(true);
     } catch (error) {
       console.error("Error: No se pudo grabar", error);
     }
@@ -46,9 +53,9 @@ const GrabacionAudio = ({ navigation }) => {
       try {
         await grabacion.stopAndUnloadAsync();
         const result = grabacion.getURI();
-        SetRecordedURI(result); // Here is the URI
+        setRecordedURI(result); // Here is the URI
         grabacion = new Audio.Recording();
-        SetisRecording(false);
+        setIsRecording(false);
         console.log("Grabacion detenida");
         console.log("Fue grabado en :", result);
       } catch (error) {
@@ -88,25 +95,12 @@ const GrabacionAudio = ({ navigation }) => {
       if (response.isLoaded) {
         if (response.isPlaying === false) {
           Reproductor.current.playAsync();
-          SetisPLaying(true);
+          setIsPlaying(true);
+          console.log("reproduciendo");
         }
       }
     } catch (error) {
       console.log(error);
-    }
-  };
-
-  const revisarTiempo = (remainingTime, tiempoPasado) => {
-    console.log(
-      "Restante",
-      remainingTime,
-      " Lo que ya paso ",
-      tiempoPasado,
-      "tiempo set",
-      tiempo
-    );
-    if (remainingTime <= 0) {
-      detenerGrabacion();
     }
   };
 
@@ -115,28 +109,37 @@ const GrabacionAudio = ({ navigation }) => {
       const checkLoading = await Reproductor.current.getStatusAsync();
       if (checkLoading.isLoaded === true) {
         await Reproductor.current.stopAsync();
-        SetisPLaying(false);
+        await Reproductor.current.unloadAsync();
+        setIsPlaying(false);
+        console.log("reproduccion detenida");
       }
     } catch (error) {
       console.log(error);
     }
   };
 
+  const revisarTiempo = (remainingTime, elapsedTime) => {
+    //setTiempoGrabado(elapsedTime);
+    if (remainingTime === 0) {
+      detenerGrabacion();
+      setFinTiempo(!finTiempo);
+      console.log("se te acabo el tiempo");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <CountdownCircleTimer
-        isPlaying
+        isPlaying={isAnimated}
         duration={tiempo}
         colors={[
-          ["#F91561", 0.5],
+          ["#FADD0B", 0.5],
           ["#F9195F", 0.3],
-          ["#FADD0B", 0.2],
+          ["#F91561", 0.2],
         ]}
       >
         {({ remainingTime, elapsedTime, animatedColor }) => (
-          <Pressable>
-            {revisarTiempo(remainingTime, elapsedTime)}
-
+          <Pressable onPressIn={console.log("Te han picao")}>
             <Animated.Text style={{ color: animatedColor }}>
               {remainingTime}
             </Animated.Text>
@@ -144,35 +147,52 @@ const GrabacionAudio = ({ navigation }) => {
         )}
       </CountdownCircleTimer>
 
-      <Button
-        mode="contained"
-        title="A grabar"
-        onPress={() => iniciarGrabacion()}
-      />
-      <Button
-        mode="contained"
-        title="Deja de grabar"
-        onPress={() => detenerGrabacion()}
-      />
-      <Button
-        mode="contained"
-        title="Reproducir sonido grabado"
-        onPress={() => reproducirSonido()}
-      />
-      <Button
-        mode="contained"
-        title="Detener sonido grabado"
-        onPress={() => detenerSonido()}
-      />
+      <Pressable
+        style={styles.boton}
+        onPress={() => {
+          iniciarGrabacion();
+          setIsAnimated(true);
+        }}
+      >
+        <Text style={styles.text}> Grabar </Text>
+      </Pressable>
+      <Pressable style={styles.boton} onPress={() => detenerGrabacion()}>
+        <Text style={styles.text}> Dejar de Grabar </Text>
+      </Pressable>
+
+      <Pressable style={styles.boton} onPress={() => reproducirSonido()}>
+        <Text style={styles.text}> Reproducir Sonido </Text>
+      </Pressable>
+      <Pressable style={styles.boton} onPress={() => detenerSonido()}>
+        <Text style={styles.text}> Detener Sonido </Text>
+      </Pressable>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: "center",
+    width: Dimensions.get("window").width * 1,
+    display: "flex",
+    justifyContent: "space-between",
     alignItems: "center",
+  },
+  boton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 10,
+    elevation: 3,
+    backgroundColor: "black",
+    justifyContent: "space-around",
+  },
+  text: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: "bold",
+    letterSpacing: 0.25,
+    color: "white",
   },
 });
 

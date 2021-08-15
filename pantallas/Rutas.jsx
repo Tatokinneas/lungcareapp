@@ -11,8 +11,7 @@ export const Rutas = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
-        <Stack.Screen name="audioRecorder" component={AudioRecoder} />
-        
+        <Stack.Screen name="Inicio" component={AudioRecoder} />
       </Stack.Navigator>
     </NavigationContainer>
   );
