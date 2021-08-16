@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Audio } from "expo-av";
 import { CountdownCircleTimer } from "react-native-countdown-circle-timer";
+import { LinearGradient } from "expo-linear-gradient";
 
 let grabacion = new Audio.Recording();
 
@@ -21,12 +22,12 @@ const GrabacionAudio = ({ navigation }) => {
 
   const [tiempo, setTiempo] = useState(5);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [finTiempo, setFinTiempo] = useState(false);
-  const [grabando, setGrabando] = useState();
+
   const [isAnimated, setIsAnimated] = useState(false);
 
   async function iniciarGrabacion() {
     try {
+      setIsPlaying(true);
       console.log("Pidiendo permisos para grabar...");
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
@@ -118,35 +119,38 @@ const GrabacionAudio = ({ navigation }) => {
     }
   };
 
-  const revisarTiempo = (remainingTime, elapsedTime) => {
-    //setTiempoGrabado(elapsedTime);
+  const revisarTiempo = (remainingTime) => {
     if (remainingTime === 0) {
       detenerGrabacion();
-      setFinTiempo(!finTiempo);
-      console.log("se te acabo el tiempo");
     }
   };
 
   return (
     <View style={styles.container}>
       <CountdownCircleTimer
-        isPlaying={isAnimated}
+        isPlaying={isPlaying}
         duration={tiempo}
         colors={[
-          ["#FADD0B", 0.5],
-          ["#F9195F", 0.3],
-          ["#F91561", 0.2],
+          ["#cacaca", 0.5],
+          ["#add8e6", 0.3],
+          ["#6fbbd3", 0.2],
         ]}
       >
-        {({ remainingTime, elapsedTime, animatedColor }) => (
-          <Pressable onPressIn={console.log("Te han picao")}>
-            <Animated.Text style={{ color: animatedColor }}>
-              {remainingTime}
-            </Animated.Text>
+        {({ remainingTime, elapsedTime }) => (
+          <Pressable>
+            {revisarTiempo(remainingTime)}
+            <LinearGradient
+              colors={["#6fbbd3", "#add8e6"]}
+              style={styles.linearGradient}
+            >
+              <Animated.Text style={styles.textStyle}>
+                {remainingTime}
+              </Animated.Text>
+              <Text style={styles.secsStyle}>segundos</Text>
+            </LinearGradient>
           </Pressable>
         )}
       </CountdownCircleTimer>
-
       <Pressable
         style={styles.boton}
         onPress={() => {
@@ -154,17 +158,16 @@ const GrabacionAudio = ({ navigation }) => {
           setIsAnimated(true);
         }}
       >
-        <Text style={styles.text}> Grabar </Text>
+        <Text style={styles.secsStyle}> Iniciar prueba </Text>
       </Pressable>
       <Pressable style={styles.boton} onPress={() => detenerGrabacion()}>
-        <Text style={styles.text}> Dejar de Grabar </Text>
+        <Text style={styles.secsStyle}> Dejar de Grabar </Text>
       </Pressable>
-
       <Pressable style={styles.boton} onPress={() => reproducirSonido()}>
-        <Text style={styles.text}> Reproducir Sonido </Text>
+        <Text style={styles.secsStyle}> Reproducir Sonido </Text>
       </Pressable>
       <Pressable style={styles.boton} onPress={() => detenerSonido()}>
-        <Text style={styles.text}> Detener Sonido </Text>
+        <Text style={styles.secsStyle}> Detener Sonido </Text>
       </Pressable>
     </View>
   );
@@ -182,16 +185,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 32,
-    borderRadius: 10,
-    elevation: 3,
-    backgroundColor: "black",
+    borderRadius: 20,
+    elevation: 5,
+    backgroundColor: "#81d8d0",
     justifyContent: "space-around",
   },
-  text: {
-    fontSize: 16,
-    lineHeight: 21,
-    fontWeight: "bold",
-    letterSpacing: 0.25,
+  linearGradient: {
+    width: 170,
+    height: 170,
+    borderRadius: 170 / 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textStyle: {
+    fontSize: 40,
+    color: "white",
+  },
+  secsStyle: {
+    fontSize: 18,
     color: "white",
   },
 });
